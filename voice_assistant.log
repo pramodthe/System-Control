@@ -1,0 +1,24 @@
+2025-11-13 19:50:25 [INFO] VoiceAssistantLogger initialized
+2025-11-13 19:50:41 [INFO] VoiceAssistantLogger initialized
+2025-11-13 19:50:50 [ERROR] ERROR [key_combination_failed]: Failed to press key combination: command - Context: {"function": "press_key_combination", "keys": ["command", "m"], "error_type": "ValueError"}
+2025-11-13 19:50:50 [INFO] TOOL_CALL: press_key_combination - Success: False
+2025-11-13 19:51:20 [INFO] ✅ Successfully detected 'Google Chrome icon in the dock' at (540, 930)
+2025-11-13 19:51:20 [INFO] TOOL_CALL: smart_detect_screen_coordinates - Success: True
+2025-11-13 19:51:20 [INFO] COORD_DETECT: Found 'Google Chrome icon in the dock' at (540, 930) - Screenshot: screens_1763092265
+2025-11-13 19:51:21 [INFO] TOOL_CALL: move_mouse_absolute - Success: True
+2025-11-13 19:51:21 [INFO] MOUSE_MOVE: Target: (540, 930), Actual: (540, 930), Error: 0.00px - SUCCESS
+2025-11-13 19:51:21 [INFO] TOOL_CALL: get_mouse_position - Success: True
+2025-11-13 19:51:22 [INFO] TOOL_CALL: left_click_mouse - Success: True
+2025-11-13 19:51:30 [INFO] TOOL_CALL: type_text - Success: True
+2025-11-13 19:51:31 [INFO] TOOL_CALL: press_key - Success: True
+2025-11-13 19:51:39 [INFO] TOOL_CALL: type_text - Success: True
+2025-11-13 19:51:40 [INFO] TOOL_CALL: press_key - Success: True
+2025-11-13 19:51:48 [INFO] TOOL_CALL: type_text - Success: True
+2025-11-13 19:51:48 [INFO] TOOL_CALL: press_key - Success: True
+2025-11-13 19:52:04 [INFO] ✅ Successfully detected '"Compose" button in the top left corner' at (90, 230)
+2025-11-13 19:52:04 [INFO] TOOL_CALL: smart_detect_screen_coordinates - Success: True
+2025-11-13 19:52:04 [INFO] COORD_DETECT: Found '"Compose" button in the top left corner' at (90, 230) - Screenshot: screens_1763092316
+2025-11-13 19:52:05 [INFO] TOOL_CALL: move_mouse_absolute - Success: True
+2025-11-13 19:52:05 [INFO] MOUSE_MOVE: Target: (90, 230), Actual: (90, 230), Error: 0.00px - SUCCESS
+2025-11-13 19:52:06 [INFO] TOOL_CALL: get_mouse_position - Success: True
+2025-11-13 19:52:06 [INFO] TOOL_CALL: left_click_mouse - Success: True
