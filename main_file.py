@@ -63,6 +63,22 @@ if sys.version_info < (3, 11, 0):
     asyncio.TaskGroup = taskgroup.TaskGroup
     asyncio.ExceptionGroup = exceptiongroup.ExceptionGroup
 
+# Import Opik for tracing
+import opik
+from opik import track
+
+# Configure Opik - it will use environment variables:
+# OPIK_API_KEY (optional for cloud)
+# OPIK_WORKSPACE (optional for cloud)
+# OPIK_URL_OVERRIDE (optional, defaults to cloud)
+try:
+    opik_client = opik.Opik()
+    print("✅ Opik tracing initialized successfully")
+except Exception as e:
+    print(f"⚠️  Opik initialization warning: {e}")
+    print("Continuing without Opik tracing. Set OPIK_API_KEY to enable.")
+    opik_client = None
+
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 SEND_SAMPLE_RATE = 16000
@@ -1997,6 +2013,22 @@ class AudioLoop:
         while True:
             turn = self.session.receive()
             response = None
+            
+            # Start a new Opik trace for each conversation turn (if Opik is available)
+            trace = None
+            if opik_client:
+                try:
+                    trace = opik_client.trace(
+                        name="Voice Assistant Turn",
+                        input={"type": "audio_conversation"},
+                        metadata={
+                            "model": MODEL,
+                            "video_mode": self.video_mode
+                        }
+                    )
+                except Exception as e:
+                    print(f"⚠️  Failed to create Opik trace: {e}")
+            
             try:
                 async for response in turn:
                     if data := response.data:
@@ -2004,12 +2036,26 @@ class AudioLoop:
                         continue
                     elif text := response.text:
                         print(text, end="")
+                        # Log text responses to Opik
+                        if trace:
+                            try:
+                                trace.update(
+                                    output={"text": text},
+                                    metadata={"response_type": "text"}
+                                )
+                            except Exception as e:
+                                print(f"⚠️  Failed to update Opik trace: {e}")
                     elif tool_call := response.tool_call:
-                        await self.handle_tool_call(session, tool_call)
+                        await self.handle_tool_call(session, tool_call, trace)
                     elif setup_complete := response.setup_complete:
                         print(response)
                     elif turn_complete := response.server_content.turn_complete:
                         print(response)
+                        if trace:
+                            try:
+                                trace.update(metadata={"turn_complete": True})
+                            except Exception as e:
+                                print(f"⚠️  Failed to update Opik trace: {e}")
                     elif generation_complete := response.server_content.generation_complete:
                         print(response)
                     elif response_complete := response.server_content.interrupted:
@@ -2022,6 +2068,22 @@ class AudioLoop:
             except Exception as e:
                 print("Response: ", response)
                 print('>>> Error: ', e)
+                # Log errors to Opik
+                if trace:
+                    try:
+                        trace.update(
+                            output={"error": str(e)},
+                            metadata={"error_type": type(e).__name__}
+                        )
+                    except Exception as opik_error:
+                        print(f"⚠️  Failed to log error to Opik: {opik_error}")
+            finally:
+                # End the trace
+                if trace:
+                    try:
+                        trace.end()
+                    except Exception as e:
+                        print(f"⚠️  Failed to end Opik trace: {e}")
                         
             while not self.audio_in_queue.empty():
                 self.audio_in_queue.get_nowait()
@@ -2039,7 +2101,7 @@ class AudioLoop:
             await asyncio.to_thread(stream.write, bytestream)
 
         
-    async def handle_tool_call(self, session, tool_call):
+    async def handle_tool_call(self, session, tool_call, trace=None):
         """
         Handle tool calls from the AI with comprehensive logging.
         
@@ -2048,6 +2110,7 @@ class AudioLoop:
         - Errors with full context
         - Timestamps for all operations
         - Special handling for coordinate detection and mouse movements
+        - Opik tracing for observability
         """
         print("Tool call: ", tool_call)
         function_responses = []
@@ -2056,12 +2119,31 @@ class AudioLoop:
             # Record start time for execution duration tracking
             start_time = time.time()
             
+            # Create an Opik span for this tool call
+            span = None
+            if trace:
+                span = trace.span(
+                    name=f"Tool: {fc.name}",
+                    input={"function": fc.name, "arguments": fc.args},
+                    type="tool"
+                )
+            
             try:
                 # Execute the tool function
                 result = func_names_dict[fc.name](**fc.args)
                 
                 # Calculate execution time
                 execution_time = time.time() - start_time
+                
+                # Log to Opik span
+                if span:
+                    span.update(
+                        output={"result": result},
+                        metadata={
+                            "execution_time_seconds": execution_time,
+                            "success": "error" not in result if isinstance(result, dict) else True
+                        }
+                    )
                 
                 # Log the successful tool call
                 logger.log_tool_call(
@@ -2081,12 +2163,19 @@ class AudioLoop:
                             coordinates={"error": result["error"]},
                             screenshot_path=screenshot_path
                         )
+                        if span:
+                            span.update(metadata={"screenshot_path": screenshot_path, "detection_failed": True})
                     else:
                         logger.log_coordinate_detection(
                             prompt=fc.args.get("prompt", ""),
                             coordinates={"x": result.get("x"), "y": result.get("y")},
                             screenshot_path=screenshot_path
                         )
+                        if span:
+                            span.update(metadata={
+                                "screenshot_path": screenshot_path,
+                                "coordinates": {"x": result.get("x"), "y": result.get("y")}
+                            })
                 
                 # Log mouse movements with verification
                 elif fc.name in ["move_mouse_absolute", "move_mouse_absolute_validated"]:
@@ -2099,12 +2188,24 @@ class AudioLoop:
                         actual=actual,
                         success=success
                     )
+                    
+                    if span:
+                        span.update(metadata={
+                            "target_position": target,
+                            "actual_position": actual,
+                            "movement_success": success,
+                            "error_distance": result.get("error_distance", 0)
+                        })
                 
                 # Log execution time for performance monitoring
                 if logger.debug_mode:
                     logger.logger.debug(
                         f"Tool '{fc.name}' executed in {execution_time:.3f}s"
                     )
+                
+                # End the span successfully
+                if span:
+                    span.end()
                 
                 # Create function response
                 function_responses.append(types.FunctionResponse(
@@ -2116,6 +2217,18 @@ class AudioLoop:
             except Exception as e:
                 # Calculate execution time even for failures
                 execution_time = time.time() - start_time
+                
+                # Log to Opik span
+                if span:
+                    span.update(
+                        output={"error": str(e)},
+                        metadata={
+                            "execution_time_seconds": execution_time,
+                            "error_type": type(e).__name__,
+                            "success": False
+                        }
+                    )
+                    span.end()
                 
                 # Log the error with full context
                 logger.log_error(

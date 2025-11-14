@@ -17,6 +17,16 @@ echo "GOOGLE_API_KEY=your-api-key-here" > .env
 
 Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey) (free).
 
+**Optional - Enable Opik Tracing** (for LLM observability):
+```bash
+# Add to your .env file
+OPIK_API_KEY=your-opik-api-key
+OPIK_WORKSPACE=your-workspace-name
+OPIK_URL_OVERRIDE=https://www.comet.com/opik/api
+```
+
+See [OPIK_SETUP.md](OPIK_SETUP.md) for detailed setup instructions.
+
 ### 2. Install Dependencies
 
 ```bash
@@ -111,6 +121,14 @@ Start speaking! Try: "What's on my screen?" or "Move the mouse to the center"
 ---
 
 ## ✨ Features
+
+### 📊 **Opik Tracing & Observability** (NEW!)
+- **Complete LLM Tracing**: Track all AI interactions and tool calls
+- **Performance Monitoring**: Measure execution times and success rates
+- **Error Tracking**: Detailed error logs with full context
+- **Visual Dashboard**: View traces in Opik's web interface
+- **Debugging Tools**: Screenshot paths, coordinates, and execution flow
+- See [OPIK_SETUP.md](OPIK_SETUP.md) for setup instructions
 
 ### 🖱️ **Mouse Control**
 - Move mouse to specific coordinates (absolute or relative)
@@ -543,6 +561,8 @@ AI: [Submits form]
 ## 📚 Related Files
 
 - `test_permissions.py` - Test macOS permissions
+- `test_opik_integration.py` - Test Opik tracing setup
+- `OPIK_SETUP.md` - Complete Opik setup guide
 - `test2.py` - Earlier version (basic features)
 - `BUGFIX_SUMMARY.md` - List of bugs fixed
 - `CRITICAL_FIXES.md` - Technical details of fixes
