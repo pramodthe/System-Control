@@ -10,12 +10,12 @@ Get up and running in 3 steps:
 
 ### 1. Create Environment File
 
-Create a `.env` file in the project root:
+Copy the example file and add your API key:
 ```bash
-echo "GOOGLE_API_KEY=your-api-key-here" > .env
+cp .env.example .env
 ```
 
-Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey) (free).
+Then edit `.env` and replace `your_google_api_key_here` with your actual API key from [Google AI Studio](https://aistudio.google.com/app/apikey) (free).
 
 **Optional - Enable Opik Tracing** (for LLM observability):
 ```bash
@@ -239,17 +239,17 @@ Expected output:
 
 **Screen Share Mode** (recommended):
 ```bash
-uv run python test3.py --mode screen
+uv run python main_file.py --mode screen
 ```
 
 **Camera Mode**:
 ```bash
-uv run python test3.py --mode camera
+uv run python main_file.py --mode camera
 ```
 
 **Audio Only** (no video):
 ```bash
-uv run python test3.py --mode none
+uv run python main_file.py --mode none
 ```
 
 ### Voice Commands Examples
@@ -558,15 +558,14 @@ AI: [Submits form]
 
 ---
 
-## 📚 Related Files
+## 📚 Project Files
 
-- `test_permissions.py` - Test macOS permissions
+- `main_file.py` - Main voice assistant application
+- `verify_setup.py` - Setup verification script
 - `test_opik_integration.py` - Test Opik tracing setup
 - `OPIK_SETUP.md` - Complete Opik setup guide
-- `test2.py` - Earlier version (basic features)
-- `BUGFIX_SUMMARY.md` - List of bugs fixed
-- `CRITICAL_FIXES.md` - Technical details of fixes
-- `NEW_FEATURES_SUMMARY.md` - New features added
+- `.env.example` - Environment variables template
+- `pyproject.toml` - Project dependencies
 
 ---
 
